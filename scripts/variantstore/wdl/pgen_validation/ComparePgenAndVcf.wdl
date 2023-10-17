@@ -26,6 +26,7 @@ workflow ComparePgensAndVcfs {
 
     output {
         Array[File] diffs = CompareFiles.diffs
+        Array[String] diff_sizes = CompareFiles.sizes
     }
 }
 

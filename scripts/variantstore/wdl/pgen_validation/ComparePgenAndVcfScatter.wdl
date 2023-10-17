@@ -10,6 +10,7 @@ workflow ComparePgensAndVcfsScattered {
         File vcfs_file_list
 
         Int split_count
+        Int? report_disk_size
     }
 
     call SplitFileLists {
@@ -33,7 +34,9 @@ workflow ComparePgensAndVcfsScattered {
 
     call Report {
         input:
-            diff_files = flatten(ComparePgensAndVcfs.diffs)
+            diff_file_uris = flatten(ComparePgensAndVcfs.diffs),
+            diff_file_sizes = flatten(ComparePgensAndVcfs.diff_sizes),
+            disk_in_gb = report_disk_size
     }
 
     output {
@@ -47,21 +50,23 @@ workflow ComparePgensAndVcfsScattered {
 # files
 task Report {
     input {
-        Array[File] diff_files
-    }
+        Array[String] diff_file_uris
+        Array[String] diff_file_sizes
 
-    Int disk_in_gb = ceil(10 + size(diff_files, "GB"))
+        Int disk_in_gb = 20
+    }
 
     command <<<
         touch report.txt
-        DIFF_ARRAY=(~{sep=" " diff_files})
+        DIFF_ARRAY=(~{sep=" " diff_file_uris})
+        SIZE_ARRAY=(~{sep=" " diff_file_sizes})
         count=0
-        for diff_file in "${DIFF_ARRAY[@]}"
+        for i in "${!DIFF_ARRAY[@]}"
         do
-            if [ -s ${diff_file} ]
+            if [ "${SIZE_ARRAY[$i]}" != "0" ]
             then
                 count=$((count+1))
-                echo -e "${diff_file}" >> report.txt
+                echo -e "${DIFF_ARRAY[$i]}" >> report.txt
             fi
         done
         echo -e "${count} files with differences" >> report.txt
