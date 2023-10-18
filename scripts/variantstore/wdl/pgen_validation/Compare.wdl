@@ -29,10 +29,8 @@ task CompareFiles {
     command <<<
         set -e
 
-        UNSORTED_ACTUAL_ARRAY=(~{sep=" " actual})
-        ACTUAL_ARRAY=($(printf "%s\n" "${UNSORTED_ACTUAL_ARRAY[@]}" | sort))
-        UNSORTED_EXPECTED_ARRAY=(~{sep=" " expected})
-        EXPECTED_ARRAY=($(printf "%s\n" "${UNSORTED_EXPECTED_ARRAY[@]}" | sort))
+        ACTUAL_ARRAY=(~{sep=" " actual})
+        EXPECTED_ARRAY=(~{sep=" " expected})
         touch sizes.txt
         for i in "${!ACTUAL_ARRAY[@]}"
         do
