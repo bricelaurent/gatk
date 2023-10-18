@@ -29,8 +29,31 @@ task CompareFiles {
     command <<<
         set -e
 
-        ACTUAL_ARRAY=(~{sep=" " actual})
-        EXPECTED_ARRAY=(~{sep=" " expected})
+        sort_by_basename() {
+            local unsorted=("$@")
+            # Make a map of basenames to filenames
+            declare -A basename_map
+            for filename in "${unsorted[@]}"
+            do
+                file_basename=$(basename "$filename")
+                basename_map["$file_basename"]="$filename"
+            done
+            # Sort the basenames
+            local sorted_basenames=($(for basename in "${!basename_map[@]}"; do echo "$basename"; done | sort))
+            # Build an array of the filenames sorted by basename
+            local sorted_filenames=()
+            for file_basename in "${sorted_basenames[@]}"
+            do
+                sorted_filenames+=("$basename_map[$file_basename]")
+            done
+
+            echo "${sorted_filenames[@]}"
+        }
+
+        UNSORTED_ACTUAL_ARRAY=(~{sep=" " actual})
+        ACTUAL_ARRAY=($(sort_by_basename "${UNSORTED_ACTUAL_ARRAY[@]}"))
+        UNSORTED_EXPECTED_ARRAY=(~{sep=" " expected})
+        EXPECTED_ARRAY=($(sort_by_basename "${UNSORTED_EXPECTED_ARRAY[@]}"))
         touch sizes.txt
         for i in "${!ACTUAL_ARRAY[@]}"
         do
