@@ -14,7 +14,6 @@ workflow CompareFilesWorkflow {
 
     output {
         Array[File] diffs = CompareFiles.diffs
-        Array[String] diff_sizes = CompareFiles.sizes
     }
 }
 
@@ -29,21 +28,26 @@ task CompareFiles {
 
     command <<<
         set -e
-        ACTUAL_ARRAY=(~{sep=" " actual})
-        EXPECTED_ARRAY=(~{sep=" " expected})
+
+        ACTUAL_ARRAY=(~{sep="\n" actual} | sort)
+        EXPECTED_ARRAY=(~{sep="\n" expected} | sort)
         touch sizes.txt
         for i in "${!ACTUAL_ARRAY[@]}"
         do
             echo "expected: ${EXPECTED_ARRAY[$i]} , actual: ${ACTUAL_ARRAY[$i]}"
-            OUTPUT_FILE="$(basename ${ACTUAL_ARRAY[$i]}).diff"
-            java -jar -Xmx5g /comparator/pgen_vcf_comparator.jar "${ACTUAL_ARRAY[$i]}" "${EXPECTED_ARRAY[$i]}" > ${OUTPUT_FILE}
-            wc -c ${OUTPUT_FILE} | awk '{print $1}' > sizes.txt
+            # Generate the diff file
+            output_file="$(basename ${ACTUAL_ARRAY[$i]}).diff"
+            java -jar -Xmx5g /comparator/pgen_vcf_comparator.jar "${ACTUAL_ARRAY[$i]}" "${EXPECTED_ARRAY[$i]}" > "$output_file"
+            # If the diff file is empty, delete it
+            if ! [ -s "$output_file" ]
+            then
+                rm "$output_file"
+            fi
         done
     >>>
 
     output {
         Array[File] diffs = glob("*.diff")
-        Array[String] sizes = read_lines("sizes.txt")
     }
 
     runtime {

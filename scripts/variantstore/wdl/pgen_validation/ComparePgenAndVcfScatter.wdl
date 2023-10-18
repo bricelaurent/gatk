@@ -35,7 +35,6 @@ workflow ComparePgensAndVcfsScattered {
     call Report {
         input:
             diff_file_uris = flatten(ComparePgensAndVcfs.diffs),
-            diff_file_sizes = flatten(ComparePgensAndVcfs.diff_sizes),
             disk_in_gb = report_disk_size
     }
 
@@ -51,7 +50,6 @@ workflow ComparePgensAndVcfsScattered {
 task Report {
     input {
         Array[String] diff_file_uris
-        Array[String] diff_file_sizes
 
         Int disk_in_gb = 20
     }
@@ -59,15 +57,11 @@ task Report {
     command <<<
         touch report.txt
         DIFF_ARRAY=(~{sep=" " diff_file_uris})
-        SIZE_ARRAY=(~{sep=" " diff_file_sizes})
         count=0
         for i in "${!DIFF_ARRAY[@]}"
         do
-            if [ "${SIZE_ARRAY[$i]}" != "0" ]
-            then
-                count=$((count+1))
-                echo -e "${DIFF_ARRAY[$i]}" >> report.txt
-            fi
+            count=$((count+1))
+            echo -e "${DIFF_ARRAY[$i]}" >> report.txt
         done
         echo -e "${count} files with differences" >> report.txt
         touch count.txt
