@@ -62,8 +62,8 @@ task CompareFiles {
         # Generate diff files for each pair of files
         for ((i = 1; i <= ~{file_count}; i++))
         do
-            local actual_file=$(sed -n "${i}p" "sorted_actual.txt")
-            local expected_file=$(sed -n "${i}p" "sorted_expected.txt")
+            actual_file=$(sed -n "${i}p" "sorted_actual.txt")
+            expected_file=$(sed -n "${i}p" "sorted_expected.txt")
             echo "actual: ${actual_file} , expected ${expected_file}"
             # Generate the diff file
             output_file="$(basename ${actual_file}).diff"
