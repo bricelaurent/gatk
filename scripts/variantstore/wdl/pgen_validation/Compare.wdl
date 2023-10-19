@@ -24,43 +24,50 @@ task CompareFiles {
         Array[File] expected
     }
 
+    Int file_count = length(actual)
+
     Int disk_in_gb = 2 * ceil(10 + size(actual, "GB") + size(expected, "GB"))
 
     command <<<
-        set -e
+        set -euxo pipefail
 
         sort_by_basename() {
-            local unsorted=("$@")
+            local unsorted="$1"
             # Make a map of basenames to filenames
             declare -A basename_map
-            for filename in "${unsorted[@]}"
+            while read -r filename
             do
                 file_basename=$(basename "$filename")
                 basename_map["$file_basename"]="$filename"
-            done
+            done <"$unsorted"
             # Sort the basenames
-            local sorted_basenames=($(for basename in "${!basename_map[@]}"; do echo "$basename"; done | sort))
-            # Build an array of the filenames sorted by basename
-            local sorted_filenames=()
-            for file_basename in "${sorted_basenames[@]}"
+            for basename in "${!basename_map[@]}"
+            do 
+                echo "$basename"; 
+            done | sort > "sorted.txt"
+            # Write the filenames sorted by basename to a file
+            local sorted_filename="$2"
+            while read -r file_basename
             do
-                sorted_filenames+=("$basename_map[$file_basename]")
-            done
-
-            echo "${sorted_filenames[@]}"
+                echo "$basename_map[$file_basename]" >> "$sorted_filename"
+            done <"sorted.txt"
         }
 
-        UNSORTED_ACTUAL_ARRAY=(~{sep=" " actual})
-        ACTUAL_ARRAY=($(sort_by_basename "${UNSORTED_ACTUAL_ARRAY[@]}"))
-        UNSORTED_EXPECTED_ARRAY=(~{sep=" " expected})
-        EXPECTED_ARRAY=($(sort_by_basename "${UNSORTED_EXPECTED_ARRAY[@]}"))
-        touch sizes.txt
-        for i in "${!ACTUAL_ARRAY[@]}"
+        # Write the vcf lists to files and sort them by vcf basename so the vcfs match up correctly
+        unsorted_actual=~{write_lines(actual)}
+        sort_by_basename "$unsorted_actual" "sorted_actual.txt"
+        unsorted_expected=~{write_lines(expected)}
+        sort_by_basename "$unsorted_expected" "sorted_expected.txt"
+
+        # Generate diff files for each pair of files
+        for ((i = 1; i <= ~{file_count}; i++))
         do
-            echo "expected: ${EXPECTED_ARRAY[$i]} , actual: ${ACTUAL_ARRAY[$i]}"
+            local actual_file=$(sed -n "${i}p" "sorted_actual.txt")
+            local expected_file=$(sed -n "${i}p" "sorted_expected.txt")
+            echo "actual: ${actual_file} , expected ${expected_file}"
             # Generate the diff file
-            output_file="$(basename ${ACTUAL_ARRAY[$i]}).diff"
-            java -jar -Xmx5g /comparator/pgen_vcf_comparator.jar "${ACTUAL_ARRAY[$i]}" "${EXPECTED_ARRAY[$i]}" > "$output_file"
+            output_file="$(basename ${actual_file}).diff"
+            java -jar -Xmx5g /comparator/pgen_vcf_comparator.jar "${actual_file}" "${expected_file}" > "$output_file"
             # If the diff file is empty, delete it
             if ! [ -s "$output_file" ]
             then
