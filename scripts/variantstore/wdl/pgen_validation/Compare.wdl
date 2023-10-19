@@ -49,7 +49,7 @@ task CompareFiles {
             local sorted_filename="$2"
             while read -r file_basename
             do
-                echo "$basename_map[$file_basename]" >> "$sorted_filename"
+                echo "${basename_map[$file_basename]}" >> "$sorted_filename"
             done <"sorted.txt"
         }
 
