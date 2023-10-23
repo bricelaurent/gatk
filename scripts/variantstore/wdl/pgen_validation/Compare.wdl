@@ -53,6 +53,17 @@ task CompareFiles {
             done <"sorted.txt"
         }
 
+        generate_diff_file() {
+            echo "actual: $1 , expected: $2"
+            # Generate the diff file
+            java -jar -Xmx5g /comparator/pgen_vcf_comparator.jar "$1" "$2" > "$(basename $1).diff"
+            # If the diff file is empty, delete it
+            if ! [ -s "$(basename $1).diff" ]
+            then
+                rm "$(basename $1).diff"
+            fi
+        }
+
         # Write the vcf lists to files and sort them by vcf basename so the vcfs match up correctly
         unsorted_actual=~{write_lines(actual)}
         sort_by_basename "$unsorted_actual" "sorted_actual.txt"
@@ -64,16 +75,11 @@ task CompareFiles {
         do
             actual_file=$(sed -n "${i}p" "sorted_actual.txt")
             expected_file=$(sed -n "${i}p" "sorted_expected.txt")
-            echo "actual: ${actual_file} , expected ${expected_file}"
             # Generate the diff file
-            output_file="$(basename ${actual_file}).diff"
-            java -jar -Xmx5g /comparator/pgen_vcf_comparator.jar "${actual_file}" "${expected_file}" > "$output_file"
-            # If the diff file is empty, delete it
-            if ! [ -s "$output_file" ]
-            then
-                rm "$output_file"
-            fi
+            $(generate_diff_file "${actual_file}" "${expected_file}") &
         done
+
+        wait
     >>>
 
     output {
@@ -85,6 +91,6 @@ task CompareFiles {
         memory: "6 GB"
         disks: "local-disk ${disk_in_gb} HDD"
         preemptible: 3
-        cpu: 1
+        cpu: 10
     }
 }
