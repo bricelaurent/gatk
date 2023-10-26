@@ -76,10 +76,11 @@ task CompareFiles {
             actual_file=$(sed -n "${i}p" "sorted_actual.txt")
             expected_file=$(sed -n "${i}p" "sorted_expected.txt")
             # Generate the diff file
-            $(generate_diff_file "${actual_file}" "${expected_file}") &
+            #$(generate_diff_file "${actual_file}" "${expected_file}") &
+            generate_diff_file "${actual_file}" "${expected_file}"
         done
 
-        wait
+        #wait
     >>>
 
     output {
