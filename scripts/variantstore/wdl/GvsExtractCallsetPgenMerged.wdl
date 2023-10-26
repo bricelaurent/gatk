@@ -1,7 +1,7 @@
 version 1.0
 
 import "GvsExtractCallsetPgen.wdl" as Extract
-import "MergePgen.wdl" as Merge
+import "MergePgenHierarchical.wdl" as Merge
 
 workflow GvsExtractCallsetMerged {
 
@@ -92,19 +92,21 @@ workflow GvsExtractCallsetMerged {
             extract_docker_override = extract_docker_override
     }
 
-    call Merge.MergePgen {
+    call Merge.MergePgenWorkflow {
         input:
-            pgen_files = GvsExtractCallset.output_pgens,
-            pvar_files = GvsExtractCallset.output_pvars,
-            psam_files = GvsExtractCallset.output_psams,
+            pgen_file_list = write_lines(GvsExtractCallset.output_pgens),
+            pvar_file_list = write_lines(GvsExtractCallset.output_pvars),
+            psam_file_list = write_lines(GvsExtractCallset.output_psams),
             plink_docker = plink_docker,
-            output_file_base_name = output_file_base_name
+            output_file_base_name = output_file_base_name,
+            merge_disk_size = 1024,
+            split_count = ceil(length(GvsExtractCallset.output_pgens)/10)
     }
 
     output {
-        File output_pgen = MergePgen.pgen_file
-        File output_pvar = MergePgen.pvar_file
-        File output_psam = MergePgen.psam_file
+        File output_pgen = MergePgenWorkflow.pgen_file
+        File output_pvar = MergePgenWorkflow.pvar_file
+        File output_psam = MergePgenWorkflow.psam_file
         File? sample_name_list = GvsExtractCallset.sample_name_list
     }
 
