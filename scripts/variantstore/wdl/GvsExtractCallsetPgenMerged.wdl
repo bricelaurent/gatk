@@ -92,11 +92,18 @@ workflow GvsExtractCallsetMerged {
             extract_docker_override = extract_docker_override
     }
 
+    call Merge.MakeFileLists {
+        input:
+            pgen_files = GvsExtractCallset.output_pgens,
+            pvar_files = GvsExtractCallset.output_pvars,
+            psam_files = GvsExtractCallset.output_psams
+    }
+
     call Merge.MergePgenWorkflow {
         input:
-            pgen_file_list = write_lines(GvsExtractCallset.output_pgens),
-            pvar_file_list = write_lines(GvsExtractCallset.output_pvars),
-            psam_file_list = write_lines(GvsExtractCallset.output_psams),
+            pgen_file_list = MakeFileLists.pgen_list,
+            pvar_file_list = MakeFileLists.pvar_list,
+            psam_file_list = MakeFileLists.psam_list,
             plink_docker = plink_docker,
             output_file_base_name = output_file_base_name,
             merge_disk_size = 1024,
@@ -104,9 +111,12 @@ workflow GvsExtractCallsetMerged {
     }
 
     output {
-        File output_pgen = MergePgenWorkflow.pgen_file
-        File output_pvar = MergePgenWorkflow.pvar_file
-        File output_psam = MergePgenWorkflow.psam_file
+        File merged_pgen = MergePgenWorkflow.pgen_file
+        File merged_pvar = MergePgenWorkflow.pvar_file
+        File merged_psam = MergePgenWorkflow.psam_file
+        Array[File] output_pgens = GvsExtractCallset.output_pgens
+        Array[File] output_pvars = GvsExtractCallset.output_pvars
+        Array[File] output_psams = GvsExtractCallset.output_psams
         File? sample_name_list = GvsExtractCallset.sample_name_list
     }
 
