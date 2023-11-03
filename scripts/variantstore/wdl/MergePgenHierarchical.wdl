@@ -120,7 +120,7 @@ task MergePgen {
             ;;
         *)
             echo "${count} pgen files, merging"
-            if head -n 1 mergelist.txt | grep -q "pvar$"
+            if head -n 1 "~{pvar_list}" | grep -q "pvar$"
             then
                 plink2 --pmerge-list mergelist.txt --memory 10000 --threads ~{threads} --out ~{output_file_base_name} --pmerge-output-vzs
             else
