@@ -120,12 +120,11 @@ task MergePgen {
             ;;
         *)
             echo "${count} pgen files, merging"
-            first_pvar_extension_sorta=$(head -n 1 mergelist.txt | tail -c 4)
-            if ["$first_pvar_extension_sorta" = "pvar"]
+            if head -n 1 mergelist.txt | grep -q "pvar$"
             then
-                plink2 --pmerge-list mergelist.txt --threads ~{threads} --out ~{output_file_base_name} --pmerge-output-vzs
+                plink2 --pmerge-list mergelist.txt --memory 10000 --threads ~{threads} --out ~{output_file_base_name} --pmerge-output-vzs
             else
-                plink2 --pmerge-list mergelist.txt pfile-vzs --threads ~{threads} --out ~{output_file_base_name} --pmerge-output-vzs
+                plink2 --pmerge-list mergelist.txt pfile-vzs --memory 10000 --threads ~{threads} --out ~{output_file_base_name} --pmerge-output-vzs
             fi
             ;;
         esac
