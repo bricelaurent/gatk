@@ -54,7 +54,6 @@ task CompareFiles {
         }
 
         generate_diff_file() {
-            echo "actual: $1 , expected: $2"
             # Generate the diff file
             java -jar -Xmx5g /comparator/pgen_vcf_comparator.jar "$1" "$2" > "$(basename $1).diff"
             # If the diff file is empty, delete it
