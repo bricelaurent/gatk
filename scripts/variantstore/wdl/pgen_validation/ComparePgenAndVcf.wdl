@@ -50,11 +50,20 @@ task Convert {
     command <<<
         set -e
         PGEN_ARRAY=(~{sep=" " pgens})
+        # Get the extension of the first pvar file so we know if they're compressed
+        PVAR_ARRAY=(~{sep=" " pvars})
+        PVAR_EXT="${PVAR_ARRAY[0]##*.}"
         for i in "${!PGEN_ARRAY[@]}"
         do
             FILE_BASENAME="$(basename ${PGEN_ARRAY[$i]} .pgen)"
             FILENAME_NO_EXT="${PGEN_ARRAY[$i]%.pgen}"
-            plink2 --pfile ${FILENAME_NO_EXT} --export vcf bgz --output-chr chrMT --out ${FILE_BASENAME}
+            # If the pvar files are .pvar, use the normal mode, otherwise assume they are .pvar.zst and use vzs mode
+            if [ "${PVAR_EXT}" == "pvar" ]
+            then
+                plink2 --pfile ${FILENAME_NO_EXT} --export vcf bgz --output-chr chrMT --out ${FILE_BASENAME}
+            else
+                plink2 --pfile ${FILENAME_NO_EXT} vzs --export vcf bgz --output-chr chrMT --out ${FILE_BASENAME}
+            fi
         done
     >>>
 
