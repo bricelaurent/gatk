@@ -87,7 +87,7 @@ task CompareFiles {
 
     runtime {
         docker: "us.gcr.io/broad-dsde-methods/klydon/pgen_vcf_comparator:test"
-        memory: "6 GB"
+        memory: "10 GB"
         disks: "local-disk ${disk_in_gb} HDD"
         preemptible: 1
         cpu: 10
