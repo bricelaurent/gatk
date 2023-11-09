@@ -55,7 +55,7 @@ task CompareFiles {
 
         generate_diff_file() {
             # Generate the diff file
-            java -jar -Xmx5g /comparator/pgen_vcf_comparator.jar "$1" "$2" > "$(basename $1).diff"
+            java -jar -Xmx1g /comparator/pgen_vcf_comparator.jar "$1" "$2" > "$(basename $1).diff"
             # If the diff file is empty, delete it
             if ! [ -s "$(basename $1).diff" ]
             then
@@ -87,7 +87,7 @@ task CompareFiles {
 
     runtime {
         docker: "us.gcr.io/broad-dsde-methods/klydon/pgen_vcf_comparator:test"
-        memory: "10 GB"
+        memory: "12 GB"
         disks: "local-disk ${disk_in_gb} HDD"
         cpu: 10
     }
