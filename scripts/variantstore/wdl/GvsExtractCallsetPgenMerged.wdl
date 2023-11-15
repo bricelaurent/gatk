@@ -117,6 +117,9 @@ workflow GvsExtractCallsetMerged {
         Array[File] output_pgens = GvsExtractCallset.output_pgens
         Array[File] output_pvars = GvsExtractCallset.output_pvars
         Array[File] output_psams = GvsExtractCallset.output_psams
+        Array[File] output_pgen_interval_files = GvsExtractCallset.output_pgen_interval_files
+        Float total_pgens_size_mb = GvsExtractCallset.total_pgens_size_mb
+        File manifest = GvsExtractCallset.manifest
         File? sample_name_list = GvsExtractCallset.sample_name_list
     }
 
