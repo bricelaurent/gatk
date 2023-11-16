@@ -116,13 +116,19 @@ task SplitIntervals {
         ~{"--extension " + intervals_file_extension} \
         --interval-file-num-digits 10 \
         ~{split_intervals_extra_args}
-        cp interval-files/*.interval_list .
+        for file in interval-files/*.interval_list
+        do
+            cp "$file" .
+        done
 
         # Drop trailing slash if one exists
         OUTPUT_GCS_DIR=$(echo ~{output_gcs_dir} | sed 's/\/$//')
 
         if [ -n "$OUTPUT_GCS_DIR" ]; then
-        gsutil -m cp *.interval_list $OUTPUT_GCS_DIR/
+            for file in *.interval_list
+            do
+                gsutil -m cp "$file" $OUTPUT_GCS_DIR/
+            done
         fi
     >>>
 
