@@ -107,7 +107,8 @@ workflow GvsExtractCallsetMerged {
             plink_docker = plink_docker,
             output_file_base_name = output_file_base_name,
             merge_disk_size = 1024,
-            split_count = ceil(length(GvsExtractCallset.output_pgens)/10)
+            split_count = ceil(length(GvsExtractCallset.output_pgens)/10),
+            zero_padded_prefix = zero_pad_output_pgen_filenames
     }
 
     output {

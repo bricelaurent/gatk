@@ -10,6 +10,7 @@ workflow MergePgenWorkflow {
         Int? threads
         Int merge_disk_size
         Int split_count
+        Boolean zero_padded_prefix
     }
 
     call SortFileLists {
@@ -17,6 +18,7 @@ workflow MergePgenWorkflow {
             pgen_list = pgen_file_list,
             psam_list = psam_file_list,
             pvar_list = pvar_file_list,
+            zero_padded_prefix = zero_padded_prefix
     }
 
     call SplitFileLists {
@@ -200,6 +202,8 @@ task SortFileLists {
         File pgen_list
         File psam_list
         File pvar_list
+
+        Boolean zero_padded_prefix = true
     }
 
     command <<<
@@ -216,14 +220,25 @@ task SortFileLists {
         declare -A psam_map
         declare -A pvar_map
 
-        # Loop through arrays and add them to maps with the number prefix as the key
+        # Loop through arrays and add them to maps with the number prefix/suffix as the key
         for i in "${!PGEN_ARRAY[@]}"
         do
-            PGEN_NUM=$(echo "${PGEN_ARRAY[$i]}" | sed 's/.*\///' | sed 's/\-.*//')
+            # If zero_padded_prefix, that means we have to get the number from the start of the filename, before the first -
+            # ex. gs://path/to/file/0001-basename.pgen
+            if [ ~{zero_padded_prefix} = true ]
+            then
+                PGEN_NUM=$(echo "${PGEN_ARRAY[$i]}" | sed 's/.*\///' | sed 's/\-.*//')
+                PSAM_NUM=$(echo "${PSAM_ARRAY[$i]}" | sed 's/.*\///' | sed 's/\-.*//')
+                PVAR_NUM=$(echo "${PVAR_ARRAY[$i]}" | sed 's/.*\///' | sed 's/\-.*//')
+            # If not zero_padded_prefix, that means we have to get the number from the end of the filename, after the last _
+            # ex. gs://path/to/file/basename_1.pgen
+            else
+                PGEN_NUM=$(echo "${PGEN_ARRAY[$i]}" | sed 's/.*_\([^_]*\)\..*/\1/p')
+                PSAM_NUM=$(echo "${PSAM_ARRAY[$i]}" | sed 's/.*_\([^_]*\)\..*/\1/p')
+                PVAR_NUM=$(echo "${PVAR_ARRAY[$i]}" | sed 's/.*_\([^_]*\)\..*/\1/p')
+            fi
             pgen_map[$PGEN_NUM]="${PGEN_ARRAY[$i]}"
-            PSAM_NUM=$(echo "${PSAM_ARRAY[$i]}" | sed 's/.*\///' | sed 's/\-.*//')
             psam_map[$PSAM_NUM]="${PSAM_ARRAY[$i]}"
-            PVAR_NUM=$(echo "${PVAR_ARRAY[$i]}" | sed 's/.*\///' | sed 's/\-.*//')
             pvar_map[$PVAR_NUM]="${PVAR_ARRAY[$i]}"
         done
 
