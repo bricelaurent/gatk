@@ -81,7 +81,7 @@ task MergePgen {
     Int cpu = threads + 1
 
     command <<<
-        set -e
+        set -euxo pipefail
 
         # Download files using gsutil
         mkdir pgen_dir
@@ -168,6 +168,8 @@ task MakeFileLists {
     }
 
     command <<<
+        set -euxo pipefail
+
         touch pgen_list.txt
         touch psam_list.txt
         touch pvar_list.txt
@@ -207,6 +209,8 @@ task SortFileLists {
     }
 
     command <<<
+        set -euxo pipefail
+
         touch sorted_pgen_list.txt
         touch sorted_psam_list.txt
         touch sorted_pvar_list.txt
@@ -285,6 +289,7 @@ task SplitFileLists {
     }
 
     command <<<
+        set -euxo pipefail
         # Get the count of files and divide by split count (rounded up) to get number of files per split list
         FILE_COUNT=$(wc -l < ~{pgen_list})
         SPLIT_LINES=$(((FILE_COUNT+~{split_count}-1)/~{split_count}))
