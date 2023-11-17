@@ -233,9 +233,9 @@ task SortFileLists {
             # If not zero_padded_prefix, that means we have to get the number from the end of the filename, after the last _
             # ex. gs://path/to/file/basename_1.pgen
             else
-                PGEN_NUM=$(echo "${PGEN_ARRAY[$i]}" | sed 's/.*_\([^_]*\)\..*/\1/p')
-                PSAM_NUM=$(echo "${PSAM_ARRAY[$i]}" | sed 's/.*_\([^_]*\)\..*/\1/p')
-                PVAR_NUM=$(echo "${PVAR_ARRAY[$i]}" | sed 's/.*_\([^_]*\)\..*/\1/p')
+                PGEN_NUM=$(echo "${PGEN_ARRAY[$i]}" | sed -n 's/.*_\([^_]*\)\..*/\1/p')
+                PSAM_NUM=$(echo "${PSAM_ARRAY[$i]}" | sed -n 's/.*_\([^_]*\)\..*/\1/p')
+                PVAR_NUM=$(echo "${PVAR_ARRAY[$i]}" | sed -n 's/.*_\([^_]*\)\..*/\1/p')
             fi
             pgen_map[$PGEN_NUM]="${PGEN_ARRAY[$i]}"
             psam_map[$PSAM_NUM]="${PSAM_ARRAY[$i]}"
