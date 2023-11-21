@@ -139,7 +139,7 @@ task SplitIntervals {
         do
             tar -rf interval-files.tar "$file"
         done
-        tar --delete -f interval_files.tar empty_dir
+        tar --delete -f interval-files.tar empty_dir
 
         # Count the number of .interval_list files in this directory
         ls *.interval_list | wc -l > num_intervals.txt
