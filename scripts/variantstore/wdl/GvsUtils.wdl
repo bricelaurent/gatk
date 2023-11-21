@@ -117,7 +117,7 @@ task SplitIntervals {
         --interval-file-num-digits 10 \
         ~{split_intervals_extra_args}
 
-        ls interval_files > interval_list_list.txt
+        ls interval-files > interval_list_list.txt
 
         # Drop trailing slash if one exists
         OUTPUT_GCS_DIR=$(echo ~{output_gcs_dir} | sed 's/\/$//')
@@ -140,7 +140,7 @@ task SplitIntervals {
         tar --delete -f interval-files.tar empty_dir
 
         # Count the number of .interval_list files in this directory
-        ls interval_files | wc -l > num_intervals.txt
+        ls interval-files | wc -l > num_intervals.txt
 
     >>>
 
