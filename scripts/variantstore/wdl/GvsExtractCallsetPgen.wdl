@@ -162,7 +162,9 @@ workflow GvsExtractCallset {
             table_patterns = tables_patterns_for_datetime_check
     }
 
-    scatter(i in range(SplitIntervals.num_intervals)) {
+    scatter(i in range(length(SplitIntervals.interval_filenames))) {
+        String interval_filename = SplitIntervals.interval_filenames[i]
+        String pgen_basename = if (zero_pad_output_pgen_filenames) then sub(interval_filename, ".interval_list", "") else "~{output_file_base_name}_${i}"
         call ExtractTask {
             input:
                 go                                 = select_first([ValidateFilterSetName.done, true]),
@@ -189,7 +191,7 @@ workflow GvsExtractCallset {
                 fq_filter_set_tranches_table       = if (use_VQSR_lite) then none else fq_filter_set_tranches_table,
                 filter_set_name                    = filter_set_name,
                 drop_state                         = drop_state,
-                output_pgen_basename               = output_file_base_name,
+                output_pgen_basename               = pgen_basename,
                 zero_pad_output_pgen_filenames     = zero_pad_output_pgen_filenames,
                 output_gcs_dir                     = output_gcs_dir,
                 max_last_modified_timestamp        = GetBQTablesMaxLastModifiedTimestamp.max_last_modified_timestamp,
@@ -331,13 +333,6 @@ task ExtractTask {
 
         touch writer.log
 
-        # Put together the full output file name with index
-        if [ ~{zero_pad_output_pgen_filenames} = true ]; then
-            FULL_OUTPUT_FILE_BASENAME=$(printf "%010d~{output_pgen_basename}" ~{interval_index})
-        else
-            FULL_OUTPUT_FILE_BASENAME="~{output_pgen_basename}_~{interval_index}"
-        fi
-
         # Extract the intervals file with the specified index from the intervals tarball
         INTERVALS_FILE_PREFIX=$(printf "%010d-" ~{interval_index})
         tar -xf ~{interval_files_tar} --wildcards "${INTERVALS_FILE_PREFIX}*" --to-stdout > "intervals.interval_list"
@@ -384,16 +379,16 @@ task ExtractTask {
         echo ${OUTPUT_FILE_PSAM_BYTES} > psam_bytes.txt
 
         if [ -n "${OUTPUT_GCS_DIR}" ]; then
-        gsutil cp ~{output_pgen_basename}.pgen ${OUTPUT_GCS_DIR}/
-        gsutil cp ~{output_pgen_basename}.pvar.zst ${OUTPUT_GCS_DIR}/
-        gsutil cp ~{output_pgen_basename}.psam ${OUTPUT_GCS_DIR}/
-        OUTPUT_FILE_DEST="${OUTPUT_GCS_DIR}/~{output_pgen_basename}.pgen"
-        OUTPUT_FILE_PVAR_DEST="${OUTPUT_GCS_DIR}/~{output_pgen_basename}.pvar.zst"
-        OUTPUT_FILE_PSAM_DEST="${OUTPUT_GCS_DIR}/~{output_pgen_basename}.psam"
+            gsutil cp ~{output_pgen_basename}.pgen ${OUTPUT_GCS_DIR}/
+            gsutil cp ~{output_pgen_basename}.pvar.zst ${OUTPUT_GCS_DIR}/
+            gsutil cp ~{output_pgen_basename}.psam ${OUTPUT_GCS_DIR}/
+            OUTPUT_FILE_DEST="${OUTPUT_GCS_DIR}/~{output_pgen_basename}.pgen"
+            OUTPUT_FILE_PVAR_DEST="${OUTPUT_GCS_DIR}/~{output_pgen_basename}.pvar.zst"
+            OUTPUT_FILE_PSAM_DEST="${OUTPUT_GCS_DIR}/~{output_pgen_basename}.psam"
         else
-        OUTPUT_FILE_DEST="~{output_pgen_basename}.pgen"
-        OUTPUT_FILE_PVAR_DEST="~{output_pgen_basename}.pvar.zst"
-        OUTPUT_FILE_PSAM_DEST="~{output_pgen_basename}.psam"
+            OUTPUT_FILE_DEST="~{output_pgen_basename}.pgen"
+            OUTPUT_FILE_PVAR_DEST="~{output_pgen_basename}.pvar.zst"
+            OUTPUT_FILE_PSAM_DEST="~{output_pgen_basename}.psam"
         fi
 
         # Parent Task will collect manifest lines and create a joined file

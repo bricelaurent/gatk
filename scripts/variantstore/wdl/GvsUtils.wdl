@@ -125,7 +125,7 @@ task SplitIntervals {
         if [ -n "$OUTPUT_GCS_DIR" ]; then
             while read line
             do
-                gsutil -m cp "$file" $OUTPUT_GCS_DIR/
+                gsutil -m cp "interval-files/$line" $OUTPUT_GCS_DIR/
             done < interval_list_list.txt
         fi
 
@@ -135,12 +135,9 @@ task SplitIntervals {
         rmdir empty_dir
         while read line
         do
-            tar -rf interval-files.tar "$line"
+            tar -rf interval-files.tar "interval-files/$line"
         done < interval_list_list.txt
         tar --delete -f interval-files.tar empty_dir
-
-        # Count the number of .interval_list files in this directory
-        ls interval-files | wc -l > num_intervals.txt
 
     >>>
 
@@ -155,7 +152,7 @@ task SplitIntervals {
 
     output {
         File interval_files_tar = "interval-files.tar"
-        Int num_intervals = read_int("num_intervals.txt")
+        Array[String] interval_filenames = read_lines("interval_list_list.txt")
         File monitoring_log = "monitoring.log"
     }
 }
