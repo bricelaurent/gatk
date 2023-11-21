@@ -332,7 +332,7 @@ task ExtractTask {
         touch writer.log
 
         # Put together the full output file name with index
-        if ~{zero_pad_output_pgen_filenames} then
+        if [ ~{zero_pad_output_pgen_filenames} = true ]; then
             FULL_OUTPUT_FILE_BASENAME=$(printf "%010d~{output_pgen_basename}" ~{interval_index})
         else
             FULL_OUTPUT_FILE_BASENAME="~{output_pgen_basename}_~{interval_index}"
