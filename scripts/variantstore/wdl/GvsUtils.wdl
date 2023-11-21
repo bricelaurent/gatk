@@ -135,7 +135,7 @@ task SplitIntervals {
         rmdir empty_dir
         while read line
         do
-            tar -rf interval-files.tar "interval-files/$line"
+            tar -rf interval-files.tar --transform 's|^interval-files/||' "interval-files/$line"
         done < interval_list_list.txt
         tar --delete -f interval-files.tar empty_dir
 
