@@ -116,33 +116,31 @@ task SplitIntervals {
         ~{"--extension " + intervals_file_extension} \
         --interval-file-num-digits 10 \
         ~{split_intervals_extra_args}
-        for file in interval-files/*.interval_list
-        do
-            cp "$file" .
-        done
+
+        ls interval_files > interval_list_list.txt
 
         # Drop trailing slash if one exists
         OUTPUT_GCS_DIR=$(echo ~{output_gcs_dir} | sed 's/\/$//')
 
         if [ -n "$OUTPUT_GCS_DIR" ]; then
-            for file in *.interval_list
+            while read line
             do
                 gsutil -m cp "$file" $OUTPUT_GCS_DIR/
-            done
+            done < interval_list_list.txt
         fi
 
         # Tar up all of the interval files one by one so we're not restricted by how many there are
         mkdir empty_dir
         tar -cf interval-files.tar empty_dir
         rmdir empty_dir
-        for file in *.interval_list
+        while read line
         do
-            tar -rf interval-files.tar "$file"
-        done
+            tar -rf interval-files.tar "$line"
+        done < interval_list_list.txt
         tar --delete -f interval-files.tar empty_dir
 
         # Count the number of .interval_list files in this directory
-        ls *.interval_list | wc -l > num_intervals.txt
+        ls interval_files | wc -l > num_intervals.txt
 
     >>>
 
