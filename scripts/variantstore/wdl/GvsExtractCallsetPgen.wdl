@@ -181,6 +181,7 @@ workflow GvsExtractCallset {
                 fq_samples_to_extract_table        = fq_samples_to_extract_table,
                 interval_index                     = i,
                 interval_files_tar                 = SplitIntervals.interval_files_tar,
+                interval_filename                  = interval_filename,
                 fq_cohort_extract_table            = fq_cohort_extract_table,
                 fq_ranges_cohort_ref_extract_table = fq_ranges_cohort_ref_extract_table,
                 fq_ranges_cohort_vet_extract_table = fq_ranges_cohort_vet_extract_table,
@@ -269,6 +270,7 @@ task ExtractTask {
 
         Int interval_index
         File interval_files_tar
+        String interval_filename
         String drop_state
 
         String fq_cohort_extract_table
@@ -333,9 +335,8 @@ task ExtractTask {
 
         touch writer.log
 
-        # Extract the intervals file with the specified index from the intervals tarball
-        INTERVALS_FILE_PREFIX=$(printf "%010d-" ~{interval_index})
-        tar -xf ~{interval_files_tar} --wildcards "${INTERVALS_FILE_PREFIX}*" --to-stdout > "intervals.interval_list"
+        # Extract the intervals file from the intervals tarball
+        tar -xf ~{interval_files_tar} ~{interval_filename}
         
 
         gatk --java-options "-Xmx9g" \
@@ -348,7 +349,7 @@ task ExtractTask {
         --local-sort-max-records-in-ram ~{local_sort_max_records_in_ram} \
         --sample-table ~{fq_samples_to_extract_table} \
         ~{"--inferred-reference-state " + inferred_reference_state} \
-        -L "intervals.interval_list" \
+        -L ~{interval_filename} \
         --project-id ~{read_project_id} \
         ~{true='--emit-pls' false='' emit_pls} \
         ~{true='--emit-ads' false='' emit_ads} \
@@ -358,7 +359,7 @@ task ExtractTask {
         --call-set-identifier ~{call_set_identifier} \
         --wdl-step GvsExtractCallset \
         --wdl-call ExtractTask \
-        --shard-identifier "${INTERVALS_FILE_PREFIX}~{output_pgen_basename}" \
+        --shard-identifier ~{interval_filename} \
         ~{cost_observability_line} \
         --writer-log-file writer.log \
         --pgen-chromosome-code ~{pgen_chromosome_code} \
