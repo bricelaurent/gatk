@@ -162,10 +162,7 @@ workflow GvsExtractCallset {
             table_patterns = tables_patterns_for_datetime_check
     }
 
-    scatter(i in range(length(SplitIntervals.interval_files))) {
-        String interval_filename = basename(SplitIntervals.interval_files[i])
-        String pgen_file_basename = if (zero_pad_output_pgen_filenames) then sub(interval_filename, ".pgen.interval_list", "") else "~{output_file_base_name}_${i}"
-
+    scatter(i in range(SplitIntervals.num_intervals)) {
         call ExtractTask {
             input:
                 go                                 = select_first([ValidateFilterSetName.done, true]),
@@ -181,7 +178,7 @@ workflow GvsExtractCallset {
                 reference_dict                     = reference_dict,
                 fq_samples_to_extract_table        = fq_samples_to_extract_table,
                 interval_index                     = i,
-                intervals                          = SplitIntervals.interval_files[i],
+                interval_files_tar                 = SplitIntervals.interval_files_tar,
                 fq_cohort_extract_table            = fq_cohort_extract_table,
                 fq_ranges_cohort_ref_extract_table = fq_ranges_cohort_ref_extract_table,
                 fq_ranges_cohort_vet_extract_table = fq_ranges_cohort_vet_extract_table,
@@ -192,7 +189,8 @@ workflow GvsExtractCallset {
                 fq_filter_set_tranches_table       = if (use_VQSR_lite) then none else fq_filter_set_tranches_table,
                 filter_set_name                    = filter_set_name,
                 drop_state                         = drop_state,
-                output_pgen_basename               = pgen_file_basename,
+                output_pgen_basename               = output_file_base_name,
+                zero_pad_output_pgen_filenames     = zero_pad_output_pgen_filenames,
                 output_gcs_dir                     = output_gcs_dir,
                 max_last_modified_timestamp        = GetBQTablesMaxLastModifiedTimestamp.max_last_modified_timestamp,
                 extract_preemptible_override       = extract_preemptible_override,
@@ -236,7 +234,7 @@ workflow GvsExtractCallset {
         Array[File] output_pgens = ExtractTask.output_pgen
         Array[File] output_pvars = ExtractTask.output_pvar
         Array[File] output_psams = ExtractTask.output_psam
-        Array[File] output_pgen_interval_files = SplitIntervals.interval_files
+        File output_pgen_interval_files = SplitIntervals.interval_files_tar
         Float total_pgens_size_mb = SumBytes.total_mb
         File manifest = CreateManifest.manifest
         File? sample_name_list = GenerateSampleListFile.sample_name_list
@@ -268,7 +266,7 @@ task ExtractTask {
         String fq_samples_to_extract_table
 
         Int interval_index
-        File intervals
+        File interval_files_tar
         String drop_state
 
         String fq_cohort_extract_table
@@ -276,6 +274,7 @@ task ExtractTask {
         String fq_ranges_cohort_vet_extract_table
         String read_project_id
         String output_pgen_basename
+        Boolean zero_pad_output_pgen_filenames
         String? output_gcs_dir
 
         String cost_observability_tablename = "cost_observability"
@@ -306,8 +305,6 @@ task ExtractTask {
     }
 
     File monitoring_script = "gs://gvs_quickstart_storage/cromwell_monitoring_script.sh"
-
-    String intervals_name = basename(intervals)
     String cost_observability_line = if (write_cost_to_db == true) then "--cost-observability-tablename ~{cost_observability_tablename}" else ""
 
     String inferred_reference_state = if (drop_state == "NONE") then "ZERO" else drop_state
@@ -320,19 +317,31 @@ task ExtractTask {
         export GATK_LOCAL_JAR="~{default="/root/gatk.jar" gatk_override}"
 
         if [ ~{do_not_filter_override} = true ]; then
-        FILTERING_ARGS=''
+            FILTERING_ARGS=''
         elif [ ~{use_VQSR_lite} = false ]; then
-        FILTERING_ARGS='--filter-set-info-table ~{fq_filter_set_info_table}
-        --filter-set-site-table ~{fq_filter_set_site_table}
-        --tranches-table ~{fq_filter_set_tranches_table}
-        --filter-set-name ~{filter_set_name}'
+            FILTERING_ARGS='--filter-set-info-table ~{fq_filter_set_info_table}
+            --filter-set-site-table ~{fq_filter_set_site_table}
+            --tranches-table ~{fq_filter_set_tranches_table}
+            --filter-set-name ~{filter_set_name}'
         else
-        FILTERING_ARGS='--filter-set-info-table ~{fq_filter_set_info_table}
-        --filter-set-site-table ~{fq_filter_set_site_table}
-        --filter-set-name ~{filter_set_name}'
+            FILTERING_ARGS='--filter-set-info-table ~{fq_filter_set_info_table}
+            --filter-set-site-table ~{fq_filter_set_site_table}
+            --filter-set-name ~{filter_set_name}'
         fi
 
         touch writer.log
+
+        # Put together the full output file name with index
+        if ~{zero_pad_output_pgen_filenames} then
+            FULL_OUTPUT_FILE_BASENAME=$(printf "%010d~{output_pgen_basename}" ~{interval_index})
+        else
+            FULL_OUTPUT_FILE_BASENAME="~{output_pgen_basename}_~{interval_index}"
+        fi
+
+        # Extract the intervals file with the specified index from the intervals tarball
+        INTERVALS_FILE_PREFIX=$(printf "%010d-" ~{interval_index})
+        tar -xf ~{interval_files_tar} --wildcards "${INTERVALS_FILE_PREFIX}*" --to-stdout > "intervals.interval_list"
+        
 
         gatk --java-options "-Xmx9g" \
         ExtractCohortToPgen \
@@ -344,7 +353,7 @@ task ExtractTask {
         --local-sort-max-records-in-ram ~{local_sort_max_records_in_ram} \
         --sample-table ~{fq_samples_to_extract_table} \
         ~{"--inferred-reference-state " + inferred_reference_state} \
-        -L ~{intervals} \
+        -L "intervals.interval_list" \
         --project-id ~{read_project_id} \
         ~{true='--emit-pls' false='' emit_pls} \
         ~{true='--emit-ads' false='' emit_ads} \
@@ -354,7 +363,7 @@ task ExtractTask {
         --call-set-identifier ~{call_set_identifier} \
         --wdl-step GvsExtractCallset \
         --wdl-call ExtractTask \
-        --shard-identifier ~{intervals_name} \
+        --shard-identifier "${INTERVALS_FILE_PREFIX}~{output_pgen_basename}" \
         ~{cost_observability_line} \
         --writer-log-file writer.log \
         --pgen-chromosome-code ~{pgen_chromosome_code} \

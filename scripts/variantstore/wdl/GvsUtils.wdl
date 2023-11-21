@@ -130,6 +130,20 @@ task SplitIntervals {
                 gsutil -m cp "$file" $OUTPUT_GCS_DIR/
             done
         fi
+
+        # Tar up all of the interval files one by one so we're not restricted by how many there are
+        mkdir empty_dir
+        tar -cf interval-files.tar empty_dir
+        rmdir empty_dir
+        for file in *.interval_list
+        do
+            tar -rf interval-files.tar "$file"
+        done
+        tar --delete -f interval_files.tar empty_dir
+
+        # Count the number of .interval_list files in this directory
+        ls *.interval_list | wc -l > num_intervals.txt
+
     >>>
 
     runtime {
@@ -142,7 +156,8 @@ task SplitIntervals {
     }
 
     output {
-        Array[File] interval_files = glob("*.interval_list")
+        File interval_files_tar = "interval-files.tar"
+        Int num_intervals = read_int("num_intervals.txt")
         File monitoring_log = "monitoring.log"
     }
 }
