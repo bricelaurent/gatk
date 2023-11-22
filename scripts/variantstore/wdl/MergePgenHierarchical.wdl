@@ -166,6 +166,11 @@ task MakeFileLists {
             localization_optional: true
         }
     }
+    
+    meta {
+        # This causes issues when call cached for some reason, so we don't want to do that
+        volatile: true
+    }
 
     command <<<
         set -euxo pipefail
