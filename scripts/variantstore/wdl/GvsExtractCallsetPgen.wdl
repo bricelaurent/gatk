@@ -74,7 +74,7 @@ workflow GvsExtractCallset {
     Boolean emit_pls = false
     Boolean emit_ads = true
 
-    String intervals_file_extension = if (zero_pad_output_pgen_filenames) then '-~{output_file_base_name}.pgen.interval_list' else '-scattered.interval_list'
+    String intervals_file_extension = if (zero_pad_output_pgen_filenames) then '-~{output_file_base_name}.interval_list' else '-scattered.interval_list'
 
     call Utils.ScaleXYBedValues {
         input:
