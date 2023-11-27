@@ -117,28 +117,18 @@ task SplitIntervals {
         --interval-file-num-digits 10 \
         ~{split_intervals_extra_args}
 
-        ls interval-files > interval_list_list.txt
+        # Print all the interval filenames with their relative paths to a file
+        find interval-files -mindepth 1 -maxdepth 1 | sort > interval_list_list.txt
 
         # Drop trailing slash if one exists
         OUTPUT_GCS_DIR=$(echo ~{output_gcs_dir} | sed 's/\/$//')
 
         if [ -n "$OUTPUT_GCS_DIR" ]; then
-            while read line
-            do
-                gsutil -m cp "interval-files/$line" $OUTPUT_GCS_DIR/
-            done < interval_list_list.txt
+            gsutil -m cp -r "interval-files" $OUTPUT_GCS_DIR/
         fi
 
-        # Tar up all of the interval files one by one so we're not restricted by how many there are
-        mkdir empty_dir
-        tar -cf interval-files.tar empty_dir
-        rmdir empty_dir
-        while read line
-        do
-            tar -rf interval-files.tar --transform 's|^interval-files/||' "interval-files/$line"
-        done < interval_list_list.txt
-        tar --delete -f interval-files.tar empty_dir
-
+        # Tar up the interval file directory
+        tar -cf interval-files.tar interval-files
     >>>
 
     runtime {
