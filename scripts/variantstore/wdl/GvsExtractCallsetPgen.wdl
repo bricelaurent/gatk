@@ -26,6 +26,8 @@ workflow GvsExtractCallset {
         String query_project = project_id
         # This is optional now since the workflow will choose an appropriate value below if this is unspecified.
         Int? scatter_count
+        Int? memory_override
+        Int? disk_override
         Boolean zero_pad_output_pgen_filenames = true
 
         # set to "NONE" if all the reference data was loaded into GVS in GvsImportGenomes
@@ -198,6 +200,8 @@ workflow GvsExtractCallset {
                 max_last_modified_timestamp        = GetBQTablesMaxLastModifiedTimestamp.max_last_modified_timestamp,
                 extract_preemptible_override       = extract_preemptible_override,
                 extract_maxretries_override        = extract_maxretries_override,
+                disk_override                      = disk_override,
+                memory_override                    = memory_override,
                 emit_pls                           = emit_pls,
                 emit_ads                           = emit_ads,
                 write_cost_to_db                   = write_cost_to_db,
@@ -298,6 +302,8 @@ task ExtractTask {
         String? docker_override
         Int? extract_preemptible_override
         Int? extract_maxretries_override
+        Int? disk_override
+        Int? memory_override
 
         Int? local_sort_max_records_in_ram = 10000000
 
@@ -338,8 +344,10 @@ task ExtractTask {
         # Extract the intervals file from the intervals tarball
         tar -xf ~{interval_files_tar} ~{interval_filename}
         
+        # Calculate the memory size we'll use for extraction as 3/4 of the total memory
+        JAVA_MEM=$(int(0.75 * MEM_SIZE))
 
-        gatk --java-options "-Xmx9g" \
+        gatk --java-options "-Xmx${JAVA_MEM}g" \
         ExtractCohortToPgen \
         --vet-ranges-extract-fq-table ~{fq_ranges_cohort_vet_extract_table} \
         --ref-ranges-extract-fq-table ~{fq_ranges_cohort_ref_extract_table} \
@@ -398,8 +406,8 @@ task ExtractTask {
     >>>
     runtime {
         docker: select_first([docker_override, "us.gcr.io/broad-dsde-methods/broad-gatk-snapshots/gatk-remote-builds:klydon-fc3a5d17fbab35f51e58e740452ead60b908d6b7-4.4.0.0-78-gfc3a5d17f"])
-        memory: "12 GB"
-        disks: "local-disk 150 HDD"
+        memory: select_first([memory_override, 12]) + " GB"
+        disks: "local-disk " + select_first([disk_override, 150]) + " HDD"
         bootDiskSizeGb: 15
         preemptible: select_first([extract_preemptible_override, "2"])
         maxRetries: select_first([extract_maxretries_override, "3"])
