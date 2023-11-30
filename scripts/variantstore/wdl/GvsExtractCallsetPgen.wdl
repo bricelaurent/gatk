@@ -346,6 +346,7 @@ task ExtractTask {
         
         # Calculate the memory size we'll use for extraction as 3/4 of the total memory
         JAVA_MEM=$(echo "scale=0; 0.75 * ${MEM_SIZE}" | bc)
+        JAVA_MEM=$(printf "%.0f" ${JAVA_MEM})
 
         gatk --java-options "-Xmx${JAVA_MEM}g" \
         ExtractCohortToPgen \
