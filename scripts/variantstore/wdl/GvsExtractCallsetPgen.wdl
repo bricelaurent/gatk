@@ -345,7 +345,7 @@ task ExtractTask {
         tar -xf ~{interval_files_tar} ~{interval_filename}
         
         # Calculate the memory size we'll use for extraction as 3/4 of the total memory
-        JAVA_MEM=$(int(0.75 * MEM_SIZE))
+        JAVA_MEM=$(echo "scale=0; 0.75 * ${MEM_SIZE}" | bc)
 
         gatk --java-options "-Xmx${JAVA_MEM}g" \
         ExtractCohortToPgen \
