@@ -39,6 +39,7 @@ workflow GvsExtractCallsetMerged {
 
         File? gatk_override
         String? extract_docker_override
+        String gatk_docker
 
         String output_file_base_name = filter_set_name
 
@@ -79,6 +80,7 @@ workflow GvsExtractCallsetMerged {
             use_interval_weights = use_interval_weights,
             interval_weights_bed = interval_weights_bed,
             gatk_override = gatk_override,
+            gatk_docker = gatk_docker,
             output_file_base_name = output_file_base_name,
             extract_maxretries_override = extract_maxretries_override,
             extract_preemptible_override = extract_preemptible_override,

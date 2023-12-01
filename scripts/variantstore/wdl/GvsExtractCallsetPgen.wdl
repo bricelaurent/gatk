@@ -39,6 +39,7 @@ workflow GvsExtractCallset {
 
         File? gatk_override
         String? extract_docker_override
+        String gatk_docker
 
         String output_file_base_name = filter_set_name
 
@@ -126,7 +127,8 @@ workflow GvsExtractCallset {
             split_intervals_extra_args = split_intervals_extra_args,
             split_intervals_disk_size_override = split_intervals_disk_size_override,
             split_intervals_mem_override = split_intervals_mem_override,
-            gatk_override = gatk_override
+            gatk_override = gatk_override,
+            gatk_docker = gatk_docker
     }
 
     call Utils.GetBQTableLastModifiedDatetime as FilterSetInfoTimestamp {
@@ -205,7 +207,7 @@ workflow GvsExtractCallset {
                 emit_pls                           = emit_pls,
                 emit_ads                           = emit_ads,
                 write_cost_to_db                   = write_cost_to_db,
-                docker_override                    = extract_docker_override
+                docker_override                    = select_first([extract_docker_override, gatk_docker])
         }
     }
 

@@ -67,6 +67,7 @@ task SplitIntervals {
         Int? split_intervals_disk_size_override
         Int? split_intervals_mem_override
         String? output_gcs_dir
+        String gatk_docker
         File? gatk_override
     }
     meta {
@@ -132,7 +133,7 @@ task SplitIntervals {
     >>>
 
     runtime {
-        docker: "us.gcr.io/broad-dsde-methods/broad-gatk-snapshots:varstore_2023_07_02_e90d90e00615dcbd9a71d4301fdc04fe2fe155fc"
+        docker: gatk_docker
         bootDiskSizeGb: 15
         memory: "~{disk_memory} GB"
         disks: "local-disk ~{disk_size} HDD"
