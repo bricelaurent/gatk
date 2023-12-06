@@ -8,8 +8,12 @@ import org.broadinstitute.barclay.help.DocumentedFeature;
 import org.broadinstitute.hellbender.cmdline.StandardArgumentDefinitions;
 import org.broadinstitute.hellbender.cmdline.programgroups.ShortVariantDiscoveryProgramGroup;
 import org.broadinstitute.hellbender.engine.GATKPath;
+import org.broadinstitute.hellbender.exceptions.UserException;
 import org.broadinstitute.pgen.PgenWriter;
+import org.broadinstitute.pgen.PgenEmptyPgenException;
 
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.EnumSet;
 
 
@@ -73,6 +77,15 @@ public class ExtractCohortToPgen extends ExtractCohort {
             optional = true
     )
     private String writerLogFile = null;
+
+    @Argument(
+            fullName = "allow-empty-pgen",
+            doc = "In the case that no variants are written to the PGEN file, this flag allows the tool to write an " +
+                    "empty PGEN file.  By default, the tool will throw an exception if no variants are written, because" +
+                    " an empty PGEN file is not technically a valid PGEN file.",
+            optional = true
+    )
+    private boolean allowEmptyPgen = false;
 
     private PgenWriter pgenWriter = null;
 
@@ -197,7 +210,48 @@ public class ExtractCohortToPgen extends ExtractCohort {
 
         // Close up our writer if we have to:
         if (pgenWriter != null) {
-            pgenWriter.close();
+            try {
+                pgenWriter.close();
+            }
+            catch(PgenEmptyPgenException e) {
+                if(allowEmptyPgen) {
+                    logger.warn("No variants were written to the PGEN file.  This is not technically a valid PGEN file, " +
+                            "but the --allow-empty-pgen flag was used, so an empty PGEN file was written.");
+                    writeEmptyPgenFiles();
+                }
+                else {
+                    throw e;
+                }
+            }
+            catch(Exception e) {
+                throw e;
+            }
         }
+    }
+
+    /**
+     * Writes empty .pgen, .pvar.zst, and .psam files to the output path
+     */
+    private void writeEmptyPgenFiles() {
+        // Make output stream for the pgen file
+        final OutputStream emptyPgenOutputStream = outputPgenPath.getOutputStream();
+        // Build paths for the pvar and psam files and make output streams for them
+        final String pgenAbsolutePath = outputPgenPath.toPath().toAbsolutePath().toString();
+        final GATKPath pvarPath = new GATKPath(pgenAbsolutePath.substring(0, pgenAbsolutePath.lastIndexOf(".pgen")) + ".pvar.zst");
+        final OutputStream emptyPvarOutputStream = pvarPath.getOutputStream();
+
+        final GATKPath psamPath = new GATKPath(pgenAbsolutePath.substring(0, pgenAbsolutePath.lastIndexOf(".pgen")) + ".psam");
+        final OutputStream emptyPsamOutputStream = psamPath.getOutputStream();
+
+        // Write empty files
+        try {
+            emptyPgenOutputStream.close();
+            emptyPvarOutputStream.close();
+            emptyPsamOutputStream.close();
+        }
+        catch (IOException e) {
+            throw new UserException("Failed to create empty pgen/pvar.zst/psam files from pgen path " + outputPgenPath.getRawInputString() + "\n Caused by:" + e.getMessage(), e);
+        }
+        
     }
 }

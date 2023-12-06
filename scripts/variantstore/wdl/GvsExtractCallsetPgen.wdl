@@ -322,7 +322,7 @@ task ExtractTask {
     String inferred_reference_state = if (drop_state == "NONE") then "ZERO" else drop_state
 
     command <<<
-        set -e
+        set -eux
 
         bash ~{monitoring_script} > monitoring.log &
 
