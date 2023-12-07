@@ -375,7 +375,8 @@ task ExtractTask {
         --writer-log-file writer.log \
         --pgen-chromosome-code ~{pgen_chromosome_code} \
         --max-alt-alleles ~{max_alt_alleles} \
-        ~{true='--lenient-ploidy-validation' false='' lenient_ploidy_validation}
+        ~{true='--lenient-ploidy-validation' false='' lenient_ploidy_validation} \
+        --allow-empty-pgen
 
 
         # Drop trailing slash if one exists
