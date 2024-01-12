@@ -105,13 +105,14 @@ workflow GvsExtractCallsetMerged {
 
     scatter(i in range(length(SplitFilesByChromosome.pgen_lists))) {
         Int split_count = ceil(length(GvsExtractCallset.output_pgens)/(length(SplitFilesByChromosome.pgen_lists)*10))
+        String contig = sub(basename(SplitFilesByChromosome.pgen_lists[i]), ".pgen_list", "")
         call Merge.MergePgenWorkflow {
             input:
                 pgen_file_list = SplitFilesByChromosome.pgen_lists[i],
                 pvar_file_list = SplitFilesByChromosome.pvar_lists[i],
                 psam_file_list = SplitFilesByChromosome.psam_lists[i],
                 plink_docker = plink_docker,
-                output_file_base_name = sub(basename(SplitFilesByChromosome.pgen_lists[i]), ".pgen_list", ""),
+                output_file_base_name = "~{output_file_base_name}.${contig}",
                 merge_disk_size = 1024,
                 split_count = split_count,
                 zero_padded_prefix = zero_pad_output_pgen_filenames
