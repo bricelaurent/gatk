@@ -111,9 +111,9 @@ workflow GvsExtractCallsetMerged {
                 pvar_file_list = SplitFilesByChromosome.pvar_lists[i],
                 psam_file_list = SplitFilesByChromosome.psam_lists[i],
                 plink_docker = plink_docker,
-                output_file_base_name = output_file_base_name,
+                output_file_base_name = basename(SplitFilesByChromosome.pgen_lists[i]),
                 merge_disk_size = 1024,
-                split_count = ceil(length(SplitFilesByChromosome.pgen_lists)/(10)),
+                split_count = split_count,
                 zero_padded_prefix = zero_pad_output_pgen_filenames
         }
     }
