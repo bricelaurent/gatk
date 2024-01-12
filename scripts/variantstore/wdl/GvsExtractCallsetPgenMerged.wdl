@@ -172,4 +172,11 @@ task SplitFilesByChromosome {
         Array[File] pvar_lists = glob("*.pvar_list")
         Array[File] psam_lists = glob("*.psam_list")
     }
+    
+    runtime {
+        docker: "ubuntu:20.04"
+        memory: "1 GB"
+        cpu: "1"
+        preemptible: 1
+    }
 }
