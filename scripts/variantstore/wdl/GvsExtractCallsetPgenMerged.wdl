@@ -153,7 +153,7 @@ task SplitFilesByChromosome {
         INTERVAL_LIST_ARRAY=(~{sep=" " interval_list_filenames})
 
         # Extract the interval lists from the tar file
-        tar -xvf ${interval_lists_tar}
+        tar -xvf ~{interval_lists_tar}
 
         # Loop through the interval lists, extracting the chromosome code for each, and writing the
         # corresponding pgen, pvar, and psam files to a separate list file for each chromosome
