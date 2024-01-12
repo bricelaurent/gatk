@@ -5,19 +5,25 @@ import "GvsUtils.wdl" as Utils
 workflow GvsExtractCallset {
     input {
         Boolean go = true
+        # The name of the bigquery dataset containing the GVS data we are extracting
         String dataset_name
+        # The project id for the specified bigquery dataset
         String project_id
+        # The name of the callset we created using GvsPrepareRangesCallset to extract
         String call_set_identifier
 
         # Chromosome code corresponding to the set of contig names used by plink that matches those used by the
-        # reference
+        # reference (see plink chromosome codes here: https://www.cog-genomics.org/plink/2.0/data#irreg_output)
+        # ExtractCohortToPgen currently only supports codes "chrM" and "MT"
         String pgen_chromosome_code = "chrM"
-        # Max number of alt alleles a site can have. If a site exceeds this number, it will not be written
+        # Max number of alt alleles a site can have. If a site exceeds this number, it will not be written (max 254)
         Int max_alt_alleles = 254
         # If true, does not throw an exception for samples@sites with unsupported ploidy (codes it as missing instead)
         Boolean lenient_ploidy_validation = false
 
+        # The project id for the bigquery dataset containing the cohort we created using GvsPrepareRangesCallset
         String cohort_project_id = project_id
+        # The name of the bigquery dataset containing the cohort we created using GvsPrepareRangesCallset
         String cohort_dataset_name = dataset_name
         Boolean do_not_filter_override = false
         Boolean control_samples = false
@@ -28,6 +34,8 @@ workflow GvsExtractCallset {
         Int? scatter_count
         Int? memory_override
         Int? disk_override
+        # If true, the output files will be named with a zero-padded interval number prefix
+        # If false, the output files will be named with a non-zero-padded interval number suffix
         Boolean zero_pad_output_pgen_filenames = true
 
         # set to "NONE" if all the reference data was loaded into GVS in GvsImportGenomes
@@ -244,6 +252,7 @@ workflow GvsExtractCallset {
         Array[File] output_pvars = ExtractTask.output_pvar
         Array[File] output_psams = ExtractTask.output_psam
         File output_pgen_interval_files = SplitIntervals.interval_files_tar
+        Array[String] output_pgen_interval_filenames = SplitIntervals.interval_filenames
         Float total_pgens_size_mb = SumBytes.total_mb
         File manifest = CreateManifest.manifest
         File? sample_name_list = GenerateSampleListFile.sample_name_list
@@ -259,9 +268,10 @@ task ExtractTask {
         String call_set_identifier
 
         # Chromosome code corresponding to the set of contig names used by plink that matches those used by the
-        # reference
+        # reference (see plink chromosome codes here: https://www.cog-genomics.org/plink/2.0/data#irreg_output)
+        # ExtractCohortToPgen currently only supports codes "chrM" and "MT"
         String pgen_chromosome_code
-        # Max number of alt alleles a site can have. If a site exceeds this number, it will not be written
+        # Max number of alt alleles a site can have. If a site exceeds this number, it will not be written (max 254)
         Int? max_alt_alleles
         # If true, does not throw an exception for samples@sites with unsupported ploidy (codes it as missing instead)
         Boolean? lenient_ploidy_validation

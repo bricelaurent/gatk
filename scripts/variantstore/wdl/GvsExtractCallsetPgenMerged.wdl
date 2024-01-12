@@ -94,29 +94,34 @@ workflow GvsExtractCallsetMerged {
             extract_docker_override = extract_docker_override
     }
 
-    call Merge.MakeFileLists {
+    call SplitFilesByChromosome {
         input:
+            interval_lists_tar = GvsExtractCallset.output_pgen_interval_files,
+            interval_list_filenames = GvsExtractCallset.output_pgen_interval_filenames,
             pgen_files = GvsExtractCallset.output_pgens,
             pvar_files = GvsExtractCallset.output_pvars,
             psam_files = GvsExtractCallset.output_psams
     }
 
-    call Merge.MergePgenWorkflow {
-        input:
-            pgen_file_list = MakeFileLists.pgen_list,
-            pvar_file_list = MakeFileLists.pvar_list,
-            psam_file_list = MakeFileLists.psam_list,
-            plink_docker = plink_docker,
-            output_file_base_name = output_file_base_name,
-            merge_disk_size = 1024,
-            split_count = ceil(length(GvsExtractCallset.output_pgens)/10),
-            zero_padded_prefix = zero_pad_output_pgen_filenames
+    scatter(i in range(length(SplitFilesByChromosome.pgen_lists))) {
+        Int split_count = ceil(length(GvsExtractCallset.output_pgens)/(length(SplitFilesByChromosome.pgen_lists)*10))
+        call Merge.MergePgenWorkflow {
+            input:
+                pgen_file_list = SplitFilesByChromosome.pgen_lists[i],
+                pvar_file_list = SplitFilesByChromosome.pvar_lists[i],
+                psam_file_list = SplitFilesByChromosome.psam_lists[i],
+                plink_docker = plink_docker,
+                output_file_base_name = output_file_base_name,
+                merge_disk_size = 1024,
+                split_count = ceil(length(SplitFilesByChromosome.pgen_lists)/(10)),
+                zero_padded_prefix = zero_pad_output_pgen_filenames
+        }
     }
 
     output {
-        File merged_pgen = MergePgenWorkflow.pgen_file
-        File merged_pvar = MergePgenWorkflow.pvar_file
-        File merged_psam = MergePgenWorkflow.psam_file
+        Array[File] merged_pgens = MergePgenWorkflow.pgen_file
+        Array[File] merged_pvars = MergePgenWorkflow.pvar_file
+        Array[File] merged_psams = MergePgenWorkflow.psam_file
         Array[File] output_pgens = GvsExtractCallset.output_pgens
         Array[File] output_pvars = GvsExtractCallset.output_pvars
         Array[File] output_psams = GvsExtractCallset.output_psams
@@ -126,4 +131,45 @@ workflow GvsExtractCallsetMerged {
         File? sample_name_list = GvsExtractCallset.sample_name_list
     }
 
+}
+
+task SplitFilesByChromosome {
+
+    input {
+        File interval_lists_tar
+        Array[String] interval_list_filenames
+        Array[String] pgen_files
+        Array[String] pvar_files
+        Array[String] psam_files
+    }
+
+    command <<<
+        set -euxo pipefail
+
+        PGEN_ARRAY=(~{sep=" " pgen_files})
+        PSAM_ARRAY=(~{sep=" " psam_files})
+        PVAR_ARRAY=(~{sep=" " pvar_files})
+
+        INTERVAL_LIST_ARRAY=(~{sep=" " interval_list_filenames})
+
+        # Extract the interval lists from the tar file
+        tar -xvf ${interval_lists_tar}
+
+        # Loop through the interval lists, extracting the chromosome code for each, and writing the
+        # corresponding pgen, pvar, and psam files to a separate list file for each chromosome
+        for index in "${!INTERVAL_LIST_ARRAY[@]}"; do
+            # Extract the chromosome code from the interval list by getting from the first interval in the file
+            chrom=$(awk '!/^@/ {print $1; exit}' ${INTERVAL_LIST_ARRAY[$index]})
+            # Append the corresponding pgen, pvar, and psam files to a list file for this chromosome
+            echo "${PGEN_ARRAY[$index]}" >> ${chrom}.pgen_list
+            echo "${PVAR_ARRAY[$index]}" >> ${chrom}.pvar_list
+            echo "${PSAM_ARRAY[$index]}" >> ${chrom}.psam_list
+        done
+    >>>
+
+    output {
+        Array[File] pgen_lists = glob("*.pgen_list")
+        Array[File] pvar_lists = glob("*.pvar_list")
+        Array[File] psam_lists = glob("*.psam_list")
+    }
 }

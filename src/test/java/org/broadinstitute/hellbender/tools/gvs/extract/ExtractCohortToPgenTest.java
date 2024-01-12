@@ -65,7 +65,8 @@ public class ExtractCohortToPgenTest extends CommandLineProgramTest {
             .add("ref-ranges-avro-file-name", quickstart10mbRefRangesAvroFile)
             .add("vet-avro-file-name", quickstart10mbVetAvroFile)
             .add("sample-file", quickstartSampleListFile)
-            .add("L", "chr20:10000000-20000000");
+            .add("L", "chr20:10000000-20000000")
+            .add("pgen-chromosome-code", "chrM");
 
     runCommandLine(args);
     Assert.assertEquals(Files.mismatch(outputPgen.toPath(), expectedPgen.toPath()), -1L);
@@ -107,7 +108,8 @@ public class ExtractCohortToPgenTest extends CommandLineProgramTest {
         .add("ref-ranges-avro-file-name", quickstart10mbRefRangesAvroFile)
         .add("vet-avro-file-name", quickstart10mbVetAvroFile)
         .add("sample-file", quickstartSampleListFile)
-        .add("L", "chr20:10000000-20000000");
+        .add("L", "chr20:10000000-20000000")
+        .add("pgen-chromosome-code", "chrM");
 
     runCommandLine(args);
     Assert.assertEquals(Files.mismatch(outputPgen.toPath(), expectedPgen.toPath()), -1L);
@@ -128,7 +130,8 @@ public class ExtractCohortToPgenTest extends CommandLineProgramTest {
             .add("sample-file", quickstartSampleListFile)
             .add("filter-set-info-table", "something")
             .add("filter-set-name", "something")
-            .add("emit-pls", false);
+            .add("emit-pls", false)
+            .add("pgen-chromosome-code", "chrM");
     runCommandLine(args);
   }
   @Test(expectedExceptions = UserException.class)
@@ -145,7 +148,8 @@ public class ExtractCohortToPgenTest extends CommandLineProgramTest {
         .add("sample-file", quickstartSampleListFile)
         .add("filter-set-info-table", "something")
         .add("filter-set-name", "something")
-        .add("emit-pls", false);
+        .add("emit-pls", false)
+        .add("pgen-chromosome-code", "chrM");
     runCommandLine(args);
   }
 
@@ -162,7 +166,8 @@ public class ExtractCohortToPgenTest extends CommandLineProgramTest {
             .add("sample-file", quickstartSampleListFile)
             .add("emit-pls", false)
             .add("filter-set-info-table", "foo")
-            .add("vqsr-score-filter-by-site", true);
+            .add("vqsr-score-filter-by-site", true)
+            .add("pgen-chromosome-code", "chrM");
     runCommandLine(args);
   }
   @Test(expectedExceptions = UserException.class)
@@ -179,7 +184,8 @@ public class ExtractCohortToPgenTest extends CommandLineProgramTest {
         .add("sample-file", quickstartSampleListFile)
         .add("emit-pls", false)
         .add("filter-set-info-table", "foo")
-        .add("vqsr-score-filter-by-site", true);
+        .add("vqsr-score-filter-by-site", true)
+        .add("pgen-chromosome-code", "chrM");
     runCommandLine(args);
   }
 
@@ -197,7 +203,8 @@ public class ExtractCohortToPgenTest extends CommandLineProgramTest {
             .add("sample-file", quickstartSampleListFile)
             .add("emit-pls", false)
             .add("filter-set-name", "foo")
-            .add("vqsr-score-filter-by-site", true);
+            .add("vqsr-score-filter-by-site", true)
+            .add("pgen-chromosome-code", "chrM");
     runCommandLine(args);
   }
 
@@ -216,7 +223,8 @@ public class ExtractCohortToPgenTest extends CommandLineProgramTest {
         .add("sample-file", quickstartSampleListFile)
         .add("emit-pls", false)
         .add("filter-set-name", "foo")
-        .add("vqsr-score-filter-by-site", true);
+        .add("vqsr-score-filter-by-site", true)
+        .add("pgen-chromosome-code", "chrM");
     runCommandLine(args);
   }
 }

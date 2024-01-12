@@ -36,7 +36,8 @@ public class ExtractCohortToPgen extends ExtractCohort {
             fullName = "pgen-chromosome-code",
             shortName = "pcc",
             doc = "Plink defines a set of chromosome codes that correspond to different sets of contig names for" +
-                    " chromosomes. This tool supports codes 'chrM' and 'MT'."
+                    " chromosomes. This tool supports codes 'chrM' and 'MT'.  Chromosome code reference for plink2" +
+                    " can be found here: https://www.cog-genomics.org/plink/2.0/data#irreg_output"
     )
     private ChromosomeCode pgenChromosomeCode;
 
