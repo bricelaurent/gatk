@@ -97,7 +97,7 @@ task MergePgen {
             ;;
         *)
             echo "${count} pgen files, merging"
-            plink2 --pmerge-list mergelist.txt --threads ~{threads} --out ~{output_file_base_name}
+            plink2 --pmerge-list mergelist.txt pfile-vzs --threads ~{threads} --out ~{output_file_base_name}
             ;;
         esac
 
