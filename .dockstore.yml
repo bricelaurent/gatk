@@ -203,7 +203,7 @@ workflows:
          branches:
              - master
              - ah_var_store
-             - rsa_vs_1155
+             - vs_1054_can_has_vatburger
          tags:
              - /.*/
    - name: GvsCreateVATFilesFromBigQuery
@@ -213,7 +213,7 @@ workflows:
          branches:
              - master
              - ah_var_store
-             - rsa_vs_1155
+             - vs_1054_can_has_vatburger
          tags:
              - /.*/
    - name: GvsValidateVat
@@ -225,7 +225,7 @@ workflows:
          branches:
              - master
              - ah_var_store
-             - rsa_vs_1155
+             - vs_1054_can_has_vatburger
          tags:
              - /.*/
    - name: GvsExtractCohortFromSampleNames
