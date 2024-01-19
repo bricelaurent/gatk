@@ -176,7 +176,7 @@ task SplitFilesByChromosome {
     
     runtime {
         docker: "ubuntu:20.04"
-        memory: "1 GB"
+        memory: "4 GB"
         cpu: "1"
         preemptible: 1
     }
