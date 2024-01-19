@@ -100,7 +100,8 @@ workflow GvsExtractCallsetMerged {
             interval_list_filenames = GvsExtractCallset.output_pgen_interval_filenames,
             pgen_files = GvsExtractCallset.output_pgens,
             pvar_files = GvsExtractCallset.output_pvars,
-            psam_files = GvsExtractCallset.output_psams
+            psam_files = GvsExtractCallset.output_psams,
+            split_intervals_disk_size_override = split_intervals_disk_size_override
     }
 
     scatter(i in range(length(SplitFilesByChromosome.pgen_lists))) {
@@ -142,7 +143,11 @@ task SplitFilesByChromosome {
         Array[String] pgen_files
         Array[String] pvar_files
         Array[String] psam_files
+
+        Int? split_intervals_disk_size_override
     }
+
+    Int disk_size = select_first([split_intervals_disk_size_override, 10])
 
     command <<<
         set -euxo pipefail
@@ -176,7 +181,8 @@ task SplitFilesByChromosome {
     
     runtime {
         docker: "ubuntu:20.04"
-        memory: "4 GB"
+        memory: "1 GB"
+        disks: "local-disk ${disk_size} HDD"
         cpu: "1"
         preemptible: 1
     }
