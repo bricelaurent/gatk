@@ -115,14 +115,14 @@ workflow GvsExtractCallset {
                                                  else if GetNumSamplesLoaded.num_samples < 20000 then 2000 # Stroke Anderson
                                                       else if GetNumSamplesLoaded.num_samples < 50000 then 10000
                                                            else if GetNumSamplesLoaded.num_samples < 100000 then 20000 # Charlie
-                                                                else 40000
+                                                                else 34000
 
     # WDL 1.0 trick to set a variable ('none') to be undefined.
     if (false) {
         File? none = ""
     }
 
-    call Utils.SplitIntervals {
+    call Utils.SplitIntervalsTarred {
         input:
             intervals = interval_list,
             ref_fasta = reference,
@@ -174,8 +174,8 @@ workflow GvsExtractCallset {
             table_patterns = tables_patterns_for_datetime_check
     }
 
-    scatter(i in range(length(SplitIntervals.interval_filenames))) {
-        String interval_filename = SplitIntervals.interval_filenames[i]
+    scatter(i in range(length(SplitIntervalsTarred.interval_filenames))) {
+        String interval_filename = SplitIntervalsTarred.interval_filenames[i]
         String pgen_basename = if (zero_pad_output_pgen_filenames) then sub(interval_filename, ".interval_list", "") else "~{output_file_base_name}_${i}"
         call ExtractTask {
             input:
@@ -192,7 +192,7 @@ workflow GvsExtractCallset {
                 reference_dict                     = reference_dict,
                 fq_samples_to_extract_table        = fq_samples_to_extract_table,
                 interval_index                     = i,
-                interval_files_tar                 = SplitIntervals.interval_files_tar,
+                interval_files_tar                 = SplitIntervalsTarred.interval_files_tar,
                 interval_filename                  = interval_filename,
                 fq_cohort_extract_table            = fq_cohort_extract_table,
                 fq_ranges_cohort_ref_extract_table = fq_ranges_cohort_ref_extract_table,
@@ -251,8 +251,8 @@ workflow GvsExtractCallset {
         Array[File] output_pgens = ExtractTask.output_pgen
         Array[File] output_pvars = ExtractTask.output_pvar
         Array[File] output_psams = ExtractTask.output_psam
-        File output_pgen_interval_files = SplitIntervals.interval_files_tar
-        Array[String] output_pgen_interval_filenames = SplitIntervals.interval_filenames
+        File output_pgen_interval_files = SplitIntervalsTarred.interval_files_tar
+        Array[String] output_pgen_interval_filenames = SplitIntervalsTarred.interval_filenames
         Float total_pgens_size_mb = SumBytes.total_mb
         File manifest = CreateManifest.manifest
         File? sample_name_list = GenerateSampleListFile.sample_name_list

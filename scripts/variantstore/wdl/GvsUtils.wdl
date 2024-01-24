@@ -54,7 +54,7 @@ task MergeVCFs {
     }
 }
 
-task SplitIntervals {
+task SplitIntervalsTarred {
     input {
         File intervals
         File ref_fasta
