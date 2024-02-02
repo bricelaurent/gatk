@@ -265,7 +265,7 @@ workflow Mutect2 {
 
     call OutputFileName {
         input:
-            file = tumor_reads
+            file_name = basename(tumor_reads)
     }
 
     call Filter {
@@ -736,15 +736,15 @@ task CalculateContamination {
 }
 
 task OutputFileName {
-    input {
-        File file
-    }
+    String file_name
 
-    String file_name = basename(file)
-
-    command {
-        person_id=$(echo "${file_name}" | sed -n 's/.*_\([0-9]\+\)\.cram/\1/p')
-        echo "${person_id}"
+    command <<<
+        person_id=$(echo "${file_name}" | grep -o -E "[0-9]+")
+        echo "$person_id"
+    >>>
+    
+    runtime {
+        docker: "gcr.io/google.com/cloudsdktool/google-cloud-cli:alpine"
     }
 
     output {
