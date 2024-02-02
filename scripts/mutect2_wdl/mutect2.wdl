@@ -284,7 +284,7 @@ workflow Mutect2 {
             m2_extra_filtering_args = m2_extra_filtering_args,
             runtime_params = standard_runtime,
             disk_space = ceil(size(MergeVCFs.merged_vcf, "GB") * 4) + disk_pad
-            person_id = person_id
+            person_id = OutputFileName.person_id
     }
 
     if (defined(realignment_index_bundle)) {
