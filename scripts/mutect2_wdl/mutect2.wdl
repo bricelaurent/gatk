@@ -263,6 +263,11 @@ workflow Mutect2 {
         }
     }
 
+    call OutputFileName {
+        input:
+            file = tumor_reads
+    }
+
     call Filter {
         input:
             ref_fasta = ref_fasta,
@@ -279,6 +284,7 @@ workflow Mutect2 {
             m2_extra_filtering_args = m2_extra_filtering_args,
             runtime_params = standard_runtime,
             disk_space = ceil(size(MergeVCFs.merged_vcf, "GB") * 4) + disk_pad
+            person_id = person_id
     }
 
     if (defined(realignment_index_bundle)) {
@@ -729,6 +735,27 @@ task CalculateContamination {
     }
 }
 
+task OutputFileName {
+    input {
+        File file
+    }
+
+    String file_name = basename(file)
+
+    command {
+        extract_number() {
+            input_file=$1
+            number=$(echo "$input_file" | sed -n 's/.*_\([0-9]\+\)\.cram/\1/p')
+            echo $number
+        }
+        person_id = extract_number $file_name
+    }
+
+    output {
+        String person_id = person_id
+    }
+}
+
 task Filter {
     input {
         File? intervals
@@ -743,12 +770,13 @@ task Filter {
         File? contamination_table
         File? maf_segments
         String? m2_extra_filtering_args
+        String person_id
 
         Runtime runtime_params
         Int? disk_space
     }
 
-    String output_vcf = if compress_vcfs then "filtered.vcf.gz" else "filtered.vcf"
+    String output_vcf = if compress_vcfs then person_id + "filtered.vcf.gz" else person_id + "filtered.vcf"
     String output_vcf_idx = output_vcf + if compress_vcfs then ".tbi" else ".idx"
 
     parameter_meta{
