@@ -743,16 +743,12 @@ task OutputFileName {
     String file_name = basename(file)
 
     command {
-        extract_number() {
-            input_file=$1
-            number=$(echo "$input_file" | sed -n 's/.*_\([0-9]\+\)\.cram/\1/p')
-            echo $number
-        }
-        person_id = extract_number file_name
+        person_id=$(echo "${input_file}" | sed -n 's/.*_\([0-9]\+\)\.cram/\1/p')
+        echo "${person_id}"
     }
 
     output {
-        String person_id = person_id
+        String person_id = read_string(stdout())
     }
 }
 
