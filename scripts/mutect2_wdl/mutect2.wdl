@@ -736,13 +736,15 @@ task CalculateContamination {
 }
 
 task OutputFileName {
-    String file_name
+    input {
+        String file_name
+    }
 
-    command <<<
+    command {
         person_id=$(echo "${file_name}" | grep -o -E "[0-9]+")
         echo "$person_id"
-    >>>
-    
+    }
+
     runtime {
         docker: "gcr.io/google.com/cloudsdktool/google-cloud-cli:alpine"
     }
