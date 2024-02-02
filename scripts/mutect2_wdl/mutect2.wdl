@@ -743,7 +743,7 @@ task OutputFileName {
     String file_name = basename(file)
 
     command {
-        person_id=$(echo "${input_file}" | sed -n 's/.*_\([0-9]\+\)\.cram/\1/p')
+        person_id=$(echo "${file_name}" | sed -n 's/.*_\([0-9]\+\)\.cram/\1/p')
         echo "${person_id}"
     }
 
