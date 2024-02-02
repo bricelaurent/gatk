@@ -748,7 +748,7 @@ task OutputFileName {
             number=$(echo "$input_file" | sed -n 's/.*_\([0-9]\+\)\.cram/\1/p')
             echo $number
         }
-        person_id = extract_number $file_name
+        person_id = extract_number file_name
     }
 
     output {
