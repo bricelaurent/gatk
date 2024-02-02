@@ -283,7 +283,7 @@ workflow Mutect2 {
             artifact_priors_tar_gz = LearnReadOrientationModel.artifact_prior_table,
             m2_extra_filtering_args = m2_extra_filtering_args,
             runtime_params = standard_runtime,
-            disk_space = ceil(size(MergeVCFs.merged_vcf, "GB") * 4) + disk_pad
+            disk_space = ceil(size(MergeVCFs.merged_vcf, "GB") * 4) + disk_pad,
             person_id = OutputFileName.person_id
     }
 
