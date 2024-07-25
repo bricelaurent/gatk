@@ -747,6 +747,8 @@ task OutputFileName {
 
     runtime {
         docker: "gcr.io/google.com/cloudsdktool/google-cloud-cli:alpine"
+        memory: "512 MB"
+        cpu: "1"
     }
 
     output {
